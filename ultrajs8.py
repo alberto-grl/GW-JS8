@@ -72,6 +72,7 @@ async def js8handler():
     print("Freq: ",set_freq(7078000,2000))
     """
     get_band_activity()
+
     last=time.time()
 
     while(True):
