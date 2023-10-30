@@ -17,9 +17,13 @@ from telethon import TelegramClient, events, utils
 api_id = 21367587
 api_hash = 'f4f258689a89677bc7455dec63ddf878'
 TClient = TelegramClient('anon', api_id, api_hash)
+group_id = -1002117082248
 loop = asyncio.get_event_loop()
+last_hb = 0
+RxFilter = ''
 
 async def js8handler():
+    global RxFilter
     parser=argparse.ArgumentParser(description="Example of using js8net.py")
     parser.add_argument("--js8_host",default=False,help="IP/DNS of JS8Call server (default localhost, env: JS8HOST)")
     parser.add_argument("--js8_port",default=False,help="TCP port of JS8Call server (default 2442, env: JS8PORT)")
@@ -28,7 +32,6 @@ async def js8handler():
     parser.add_argument("--listen",default=False,action="store_true",help="Listen only - do not write files")
     parser.add_argument("--verbose",default=False,action="store_true",help="Lots of status messages")
     args=parser.parse_args()
-
     # Load spots.json for some historical context, unless the file is
     # missing, or the user asks not to.
     if(exists("spots.json") and not(args.clean)):
@@ -37,6 +40,8 @@ async def js8handler():
             spots=json.load(f)
             f.close()
 
+    # Load spots.json for some historical context, unless the file is
+    # missing, or the user asks not to.
     js8host=False
     js8port=False
 
@@ -75,6 +80,7 @@ async def js8handler():
 
     last=time.time()
 
+
     while(True):
         await asyncio.sleep(0.1)
         if(not(rx_queue.empty())):
@@ -110,8 +116,9 @@ async def js8handler():
                     print()
 #                    print(json.dumps(rx,indent=2,sort_keys=True))
 #                    print()
-                    JS8RXString = 'JS8 RX: ' + rx['params']['FROM'] + ' TO ' + rx['params']['TO'] + ' SNR ' + str(rx['params']['SNR']) + ' - ' + rx['params']['TEXT']
-                    await TClient.send_message('testjs8',JS8RXString)
+                    JS8RXString = 'JS8 RX: ' + str(rx['params']['OFFSET']) + ' | ' + str(rx['params']['SNR'])  + ' | ' + rx['params']['TEXT']
+                    if RxFilter in rx['params']['TEXT'] or RxFilter == '':
+                        await TClient.send_message(group_id,JS8RXString)
 """             print("JS8 Received")
                 print("FROM:   ",rx['params']['FROM'])
                 print("TO:     ",rx['params']['TO'])
@@ -128,24 +135,56 @@ async def f3(name):
 
 @TClient.on(events.NewMessage())
 async def my_event_handler(event):
-    print(event.message.to_dict()['message'])
-    if (event.message.to_dict()['message'] == '/hb'):
-        grid=get_grid()
-        send_heartbeat(grid)
-        await TClient.send_message('testjs8', 'JS8 Heartbeat sent.')
-
+    global last_hb
+    global RxFilter
     TgramTokens = event.message.to_dict()['message'].split()
-    if (TgramTokens[0] == '/offset'):   
-        set_freq(7078000, int(TgramTokens[1]))
-        await TClient.send_message('testjs8', 'Offset changed.')
-#    send_message('abc')
 
+    if len(TgramTokens) > 0: 
 
+        if (TgramTokens[0] == '/hb' and len(TgramTokens) == 1): 
+            if (time.time() > last_hb + 300):
+                grid=get_grid()
+                send_heartbeat(grid)
+                last_hb = time.time()
+                await TClient.send_message(group_id, 'JS8 Heartbeat sent.')
+            else:
+                await TClient.send_message(group_id, 'Max one HB every 5 min. Wait')
+
+        elif (TgramTokens[0] == '/offset' and len(TgramTokens) == 2):   
+            set_freq(7078000, int(TgramTokens[1]))
+            print("change offset")
+            await TClient.send_message(group_id, 'Offset changed.')
+
+        elif (TgramTokens[0] == '/TX'):   
+            send_message( event.message.to_dict()['message'][3:])
+            await TClient.send_message(group_id, 'MSG sent.')
+
+        elif (TgramTokens[0] == '/qsnr' and len(TgramTokens) == 2):   
+            query_snr( TgramTokens[1])
+            await TClient.send_message(group_id, 'Query SNR sent.')
+
+        elif (TgramTokens[0] == '/semail' and len(TgramTokens) >= 2):
+            EmailMessage = event.message.to_dict()['message'].split(" ", 2)
+            send_email( TgramTokens[1], EmailMessage[2])
+            await TClient.send_message(group_id, 'Email sent')
+            
+        elif (TgramTokens[0] == '/srxfilt'):
+            if (len(TgramTokens) == 2):
+                RxFilter = TgramTokens[1]
+                await TClient.send_message(group_id, 'RX filter set')
+            elif(len(TgramTokens) == 1):
+                RxFilter = ''
+                await TClient.send_message(group_id, 'RX filter reset')
+      
+        elif (TgramTokens[0] == '/qinfo' and len(TgramTokens) == 2):   
+            query_info( TgramTokens[1])
+            await TClient.send_message(group_id, 'Query info sent.')
 async def main():
    
 
     await TClient.start()
     print('Starting main loop')
+
     await asyncio.gather(js8handler(), TClient.run_until_disconnected())
 #    await asyncio.gather(f3('f3 test'), js8handler(), TClient.run_until_disconnected())
 
