@@ -13,11 +13,21 @@ import asyncio
 from telethon.sync import TelegramClient
 from telethon import TelegramClient, events, utils
 
-# Remember to use your own values from my.telegram.org!
-api_id = 21367587
-api_hash = 'f4f258689a89677bc7455dec63ddf878'
+
+if(exists("TelegramAPI.json")):
+    print('Using API values from TelegramAPI.json')
+    print('Insert you own values from my telegram.org!')
+    f=open("TelegramAPI.json")
+    TelegramAPI=json.load(f)
+    f.close()
+    api_id = TelegramAPI['api_id']
+    api_hash = TelegramAPI['api_hash']
+    group_id = TelegramAPI['group_id']
+else:
+    print('TelegramAPI.json not found! Insert you own values from my telegram.org!')
+    exit()
+    
 TClient = TelegramClient('anon', api_id, api_hash)
-group_id = -1002117082248
 loop = asyncio.get_event_loop()
 last_hb = 0
 RxFilter = ''
