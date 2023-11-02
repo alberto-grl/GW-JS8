@@ -31,7 +31,7 @@ These commands sent to the group trigger actions:
 
 It's trivial to add more.
 
-Not sure if this is totally legal for use on the air. I'm testing it with two PCs connected back to back.
+Not sure if this is totally legal for use on the air. I'm testing it with two PCs connected with audio cables.
 Ask for legal advice, you have been warned.
 
 
