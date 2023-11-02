@@ -1,7 +1,9 @@
 # GW-JS8
 This bot is a gateway between the JS8 terminal JS8CALL and Telegram.
 It employs the Telegram library Telethon and the JS8CALL library JS8net 
+
 https://github.com/LonamiWebs/Telethon
+
 https://github.com/jfrancis42/js8net
 
 Create a Telegram group, add the ultrajs8 bot and the traffic received by JS8CALL
@@ -13,12 +15,19 @@ Also, JS8Call should be configured to expose its API.
 These commands sent to the group trigger actions:
 
 /hb                send heartbeat
+
 /offset n          Changes offset
+
 /qsnr              asks for SNR
+
 /qinfo             asks info
+
 /TX text           sends string
+
 /semail addr text  sends email to addr containing text, like /semail POTUS@WHITEHOUSE.GOV LONG TIME NO SEE 73
+
 /srxfilt call      sets a filter to the message sent to the group by the bot
+
 
 It's trivial to add more.
 
