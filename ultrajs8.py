@@ -165,8 +165,13 @@ async def my_event_handler(event):
             print("change offset")
             await TClient.send_message(group_id, 'Offset changed.')
 
-        elif (TgramTokens[0] == '/TX'):   
-            send_message( event.message.to_dict()['message'][3:])
+        elif (TgramTokens[0] == '/sgrid' and len(TgramTokens) == 2):   
+            send_aprs_grid(TgramTokens[1])
+            print("Grid sent")
+            await TClient.send_message(group_id, 'Grid sent.')
+
+        elif (TgramTokens[0] == '/tx'):   
+            send_message( event.message.to_dict()['message'][4:])
             await TClient.send_message(group_id, 'MSG sent.')
 
         elif (TgramTokens[0] == '/qsnr' and len(TgramTokens) == 2):   
