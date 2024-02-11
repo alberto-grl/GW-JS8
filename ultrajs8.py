@@ -133,7 +133,7 @@ async def js8handler():
                     JS8RxTokens = rx['params']['TEXT'].split()
                     print("JS8RxTokens[2] :   ",JS8RxTokens[2])
                     if JS8RxTokens[2] == '#HKU' and rx['params']['TO'] == 'I4NZX' :
-                        print("P DETECTED IN DIRECTED:   ",rx['params']['TEXT'][0:3])
+                        print("#HKU DETECTED IN :   ",rx['params']['TEXT'])
                         if(exists("Haiku." + JS8RxTokens[3])):
                             print('Using Haiku file n. ' + JS8RxTokens[3])
                             
@@ -143,12 +143,12 @@ async def js8handler():
                             fh.close()
                             send_message(rx['params']['FROM'] + ' ' + Haiku)
                         
-                    else:
-                        print('Haiku file does not exixts')
-                        send_message(rx['params']['FROM'] + ' ' + 'HAIKU NOT FOUND')
+                        else:
+                            print('Haiku file does not exixts')
+                            send_message(rx['params']['FROM'] + ' ' + 'HAIKU NOT FOUND')
     
                        
-                        print("#HKU DETECTED IN :   ",rx['params']['TEXT'])
+                        
                        
 """             print("JS8 Received")
                 print("FROM:   ",rx['params']['FROM'])
