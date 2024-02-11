@@ -129,6 +129,15 @@ async def js8handler():
                     JS8RXString = 'JS8 RX: ' + str(rx['params']['OFFSET']) + ' | ' + str(rx['params']['SNR'])  + ' | ' + rx['params']['TEXT']
                     if RxFilter in rx['params']['TEXT'] or RxFilter == '':
                         await TClient.send_message(group_id,JS8RXString)
+                    
+                    JS8RxTokens = rx['params']['TEXT'].split()
+                    print("JS8RxTokens[2] :   ",JS8RxTokens[2])
+                    if JS8RxTokens[2] == '#HKU' and rx['params']['TO'] == 'I4NZX' :
+                        print("P DETECTED IN DIRECTED:   ",rx['params']['TEXT'][0:3])
+                        send_message(rx['params']['FROM'] + ' ' + 'Static fills the air Tuning in to distant waves Whispers from afar Melodies unfold Radio s rhythmic embrace Echoes linger on Through the crackling hiss Voices carry on the wind Unseen connections')
+                        send_message(rx['params']['FROM'] + ' ' + 'TEST2')
+                        print("#HKU DETECTED IN :   ",rx['params']['TEXT'])
+                       
 """             print("JS8 Received")
                 print("FROM:   ",rx['params']['FROM'])
                 print("TO:     ",rx['params']['TO'])
