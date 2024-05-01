@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import logging
+from logging.handlers import RotatingFileHandler
+
 import os
 import sys
 import time
@@ -13,11 +16,29 @@ import asyncio
 from telethon.sync import TelegramClient
 from telethon import TelegramClient, events, utils
 
-# Remember to use your own values from my.telegram.org!
-api_id = 21367587
-api_hash = 'f4f258689a89677bc7455dec63ddf878'
+logger = logging.getLogger('UltraJS8_log')
+#logger.setLevel(logging.INFO)
+#logging.basicConfig(filename='Ultrajs8.log', encoding='utf-8', level=logging.INFO)
+    # add a rotating handler
+#handler = RotatingFileHandler('Ultrajs8.log', maxBytes=100000, backupCount=5)
+#logger.addHandler(handler)
+logging.basicConfig(handlers=[RotatingFileHandler('Ultrajs8.log', maxBytes=100000, backupCount=5)], level=logging.INFO, format='%(asctime)s %(message)s')
+
+
+if(exists("TelegramAPI.json")):
+    print('Using API values from TelegramAPI.json')
+    print('Insert you own values from my telegram.org!')
+    f=open("TelegramAPI.json")
+    TelegramAPI=json.load(f)
+    f.close()
+    api_id = TelegramAPI['api_id']
+    api_hash = TelegramAPI['api_hash']
+    group_id = TelegramAPI['group_id']
+else:
+    print('TelegramAPI.json not found! Insert you own values from my telegram.org!')
+    exit()
+    
 TClient = TelegramClient('anon', api_id, api_hash)
-group_id = -1002117082248
 loop = asyncio.get_event_loop()
 last_hb = 0
 RxFilter = ''
@@ -119,6 +140,45 @@ async def js8handler():
                     JS8RXString = 'JS8 RX: ' + str(rx['params']['OFFSET']) + ' | ' + str(rx['params']['SNR'])  + ' | ' + rx['params']['TEXT']
                     if RxFilter in rx['params']['TEXT'] or RxFilter == '':
                         await TClient.send_message(group_id,JS8RXString)
+                    
+                    JS8RxTokens = rx['params']['TEXT'].split()
+                    print("JS8RxTokens[2] :   ",JS8RxTokens[2])
+                    if JS8RxTokens[2] == '#HKU' and rx['params']['TO'] == 'I4NZX' :
+                        print("#HKU DETECTED IN :   ",rx['params']['TEXT'])
+                        if(exists("Haiku." + JS8RxTokens[3])):
+                            print('Using Haiku file n. ' + JS8RxTokens[3])
+                            
+                            fh=open('Haiku.' + JS8RxTokens[3])
+                            Haiku=fh.read()
+ #                           Haiku.replace '\'' , ''
+                            fh.close()
+                            send_message(rx['params']['FROM'] + ' ' + Haiku)
+                        
+                        else:
+                            print('Haiku file does not exixts')
+                            send_message(rx['params']['FROM'] + ' ' + 'HAIKU NOT FOUND')
+
+
+                    if JS8RxTokens[2] == '#ROSA' and rx['params']['TO'] == 'I4NZX' :
+
+                        print("#ROSA DETECTED IN :   ",rx['params']['TEXT'])
+                        if(exists("IQ2MI_telemetry")):
+                            print('Using IQ2MI_telemetry')
+                            
+                            fh=open('IQ2MI_telemetry')
+                            Telemetry=fh.read()
+                            fh.close()
+                            send_message(rx['params']['FROM'] + ' ' + Telemetry)
+                            logger.info('JS8 #ROSA Request from %s - %s', rx['params']['FROM'], Telemetry)
+                        
+                        else:
+                            print('Telemetry file does not exixts')
+                            send_message(rx['params']['FROM'] + ' ' + 'TELEMETRY NOT FOUND')
+                            logger.info('JS8 #ROSA Request from %s - NOT FOUND', rx['params']['FROM'])
+    
+                       
+                        
+                       
 """             print("JS8 Received")
                 print("FROM:   ",rx['params']['FROM'])
                 print("TO:     ",rx['params']['TO'])
@@ -137,7 +197,12 @@ async def f3(name):
 async def my_event_handler(event):
     global last_hb
     global RxFilter
+
+   
+
     TgramTokens = event.message.to_dict()['message'].split()
+    sender = await event.get_sender()
+    logger.info('Telegram Message: %s, %s,    %s', sender.username, sender.first_name, event.message.message)
 
     if len(TgramTokens) > 0: 
 
@@ -155,8 +220,13 @@ async def my_event_handler(event):
             print("change offset")
             await TClient.send_message(group_id, 'Offset changed.')
 
-        elif (TgramTokens[0] == '/TX'):   
-            send_message( event.message.to_dict()['message'][3:])
+        elif (TgramTokens[0] == '/sgrid' and len(TgramTokens) == 2):   
+            send_aprs_grid(TgramTokens[1])
+            print("Grid sent")
+            await TClient.send_message(group_id, 'Grid sent.')
+
+        elif (TgramTokens[0] == '/tx'):   
+            send_message( event.message.to_dict()['message'][4:])
             await TClient.send_message(group_id, 'MSG sent.')
 
         elif (TgramTokens[0] == '/qsnr' and len(TgramTokens) == 2):   
@@ -180,8 +250,6 @@ async def my_event_handler(event):
             query_info( TgramTokens[1])
             await TClient.send_message(group_id, 'Query info sent.')
 async def main():
-   
-
     await TClient.start()
     print('Starting main loop')
 
@@ -191,5 +259,6 @@ async def main():
     
 
 # Main program.
-if(__name__ == '__main__'):   
+if(__name__ == '__main__'): 
+    logger.info('Ultrajs8 start')  
     TClient.loop.run_until_complete(main())
